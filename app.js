@@ -1,33 +1,18 @@
-var express = require('express'),
-    path = require('path'),
-    favicon = require('serve-favicon'),
-    logger = require('morgan'),
-    cookieParser = require('cookie-parser'),
-    bodyParser = require('body-parser'),
-    config = require('./config'),
-    localize = require('./locales/localize'),
-    mongoose = require('mongoose'),
-    auth = require('./helpers/auth');
+var express = require('express');
+var path = require('path');
+var favicon = require('serve-favicon');
+var logger = require('morgan');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
 
-var routes = require('./routes/index'),
-    sessions = require('./routes/sessions'),
-    accounts = require('./routes/accounts'),
-    notes = require('./routes/notes');
+var index = require('./routes/index');
+var users = require('./routes/users');
 
 var app = express();
 
-/**
- * Config
- */
-// Connect to MongoDB
-mongoose.connect(config.database);
-
-/**
- * View Engine
- */
-// TODO Remove
+// view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -37,33 +22,25 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-/**
- * Middleware
- */
-//app.use('/', auth);
+app.use('/', index);
+app.use('/users', users);
 
-/**
- * Routes
- */
-app.use('/', routes);
-app.use('/sessions', sessions);
-app.use('/accounts', accounts);
-app.use('/notes', auth, notes);
-
-/**
- * Error Handling
- */
-// Catch 404 and forward to error handler
+// catch 404 and forward to error handler
 app.use(function(req, res, next) {
-    var err = new Error(localize('NOT_FOUND'));
-    err.status = 404;
-    next(err);
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
 });
 
-// Error handler
+// error handler
 app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.json({ error: true, feedback: err.message });
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
 });
 
 module.exports = app;
